@@ -1,0 +1,2 @@
+/Users/rohanjagadeesan/Desktop/Code/li_lab/WinnerTakeAll/data/parton_data.root filter=lfs diff=lfs merge=lfs -text
+data/parton_data.root filter=lfs diff=lfs merge=lfs -text
