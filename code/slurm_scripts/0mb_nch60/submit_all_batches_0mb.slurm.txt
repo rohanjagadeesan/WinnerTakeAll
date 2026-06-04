@@ -9,9 +9,9 @@
 #SBATCH --mail-user=rj65@rice.edu 
 #SBATCH --mail-type=ALL            
 
-#SBATCH --array=1-38
-#SBATCH --output=logs/0mb/allbatches_%A_%a.out       
-#SBATCH --error=logs/0mb/allbatches_%A_%a.err 
+#SBATCH --array=0-39
+#SBATCH --output=logs/per_batch_signal/allbatches_%A_%a.out       
+#SBATCH --error=logs/per_batch_signal/allbatches_%A_%a.err 
 
 
 
@@ -35,7 +35,7 @@ if [[ -d $SHARED_SCRATCH/$USER && -w $SHARED_SCRATCH/$USER ]]; then
     BATCH_NUM=$SLURM_ARRAY_TASK_ID
 
     # submit sbatch from the same directory as the .py file
-    python -u "$SHARED_SCRATCH/$USER/wta_scratch/all_batch_nots_wta_2pc_maker.py" \
+    python -u "$SHARED_SCRATCH/$USER/wta_scratch/all_batch_2pc_maker.py" \
     --input "$INPUT_FILE" \
     --outdir "$OUTPUT_DIR" \
     --batchnum $BATCH_NUM
