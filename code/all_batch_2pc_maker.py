@@ -182,8 +182,8 @@ def main():
         # fastjet sometimes recombines one jet into two or more, so in those cases i need to use the highest pt recombined one. 
         wta_jets = wta_jets[:, -1] #slicing to be only the leading jet in the recombined lists. Other items in the list will only have a couple of soft particles
         std_jets = std_jets[:, -1]
-        wta_constituents = wta_constituents[:, -1]  # only need constituents of the relevant recombined jets
-        std_constituents = std_constituents[:, -1]
+        wta_constituents = wta_constituents[:, 0]  # only need constituents of the relevant recombined jets
+        std_constituents = std_constituents[:, 0]
 
         # garbage collecting:
         del particle_mask, particles
