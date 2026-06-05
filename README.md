@@ -1,6 +1,12 @@
 # WinnerTakeAll
 Builds 2-particle correlator distributions for proton-proton collisions, comparing winner-take-all and standard jet axes.
 
-Key files:
-1. WTA_2pc_maker.ipynb: makes the standard and wta 2 particle correlators for a given dataset.
-2. drawflow.ipynb: Makes the 1D projections, Fourier series fits, and plots V2 vs multiplicity.
+
+Overview of analysis pipeline:
+1. On cluster:
+    1. Make the signals, then merge them
+    2. Make the backgrounds, then merge them
+    3. copy results to local
+2. Locally:
+    1. Make the yields out of the signals and backgrounds
+    2. Extract and compare V2 for the different data and different cluster methods
