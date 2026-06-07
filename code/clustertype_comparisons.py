@@ -24,6 +24,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run Nch comparison")
     parser.add_argument("--input", required=True, type=str, help="Path to the directory of all batches to analyse")
     parser.add_argument("--outdir", required=True, type=str, help="Directory where output should be saved")
+    parser.add_argument("--batchnum", required=True, type=int, help="Batch number to analyse")
     args = parser.parse_args()
 
 
@@ -32,12 +33,8 @@ def main():
     # DATA STREAMING LOOP OVER MULTIPLE FILES
     # -------------------------------------------------------------------------
     # Discover files globally (handles wildcards or folder inputs)
-    if "*.root" in args.input:
-        all_files = sorted(glob.glob(args.input))
-    else:
-        all_files = sorted(glob.glob(os.path.join(args.input, "**", "*.root"), recursive=True))
-        if len(all_files) == 0:
-            all_files = sorted(glob.glob(os.path.join(args.input, "*.root")))
+
+    all_files = sorted(glob.glob(os.path.join(args.input, f"batch{args.batchnum}", "*.root"), recursive=True))
     
     print(f"Found {len(all_files)} total files across all batches in {args.input}")
     if len(all_files) == 0:
@@ -171,11 +168,11 @@ def main():
         
 
         # Extract Unique Constituents via Cartesian Overlap Masks
-        pairs_std = ak.cartesian([particles.phi, std_constituents.phi], axis=1)
+        pairs_std = ak.cartesian([particles.phi, std_constituents.phi], axis=1, nested=True)
         p_phi, c_phi = ak.unzip(pairs_std)
         is_in_std = ak.any(abs(p_phi - c_phi) < 1e-5, axis=-1)
 
-        pairs_wta = ak.cartesian([particles.phi, wta_constituents.phi], axis=1)
+        pairs_wta = ak.cartesian([particles.phi, wta_constituents.phi], axis=1, nested=True)
         p_phi_wta, c_phi_wta = ak.unzip(pairs_wta)
         is_in_wta = ak.any(abs(p_phi_wta - c_phi_wta) < 1e-5, axis=-1)
 
@@ -219,7 +216,7 @@ def main():
 
     # Write out everything to one file
     os.makedirs(args.outdir, exist_ok=True)
-    full_output_path = os.path.join(args.outdir, f"Cluster_type_comparison.root")
+    full_output_path = os.path.join(args.outdir, f"Cluster_type_comparison_batch{args.batchnum}.root")
     
     print(f"Opening output file to save all results: {full_output_path}")
     out_file = ROOT.TFile(full_output_path, "RECREATE")

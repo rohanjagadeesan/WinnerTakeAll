@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=comp_nch_0mb
+#SBATCH --job-name=comp_nch_3mb
 #SBATCH --account=commons              
 #SBATCH --partition=commons            
 #SBATCH --ntasks=1                
@@ -8,9 +8,10 @@
 #SBATCH --time=04:00:00            
 #SBATCH --mail-user=rj65@rice.edu 
 #SBATCH --mail-type=ALL            
-#SBATCH --output=logs/comp/comp%j.out       
-#SBATCH --error=logs/comp/comp_%j.err 
 
+#SBATCH --array=0-17
+#SBATCH --output=logs/comp/comp_nch_%A_%a.out       
+#SBATCH --error=logs/comp/comp_nch_%A_%a.err 
 
 # Move your execution context safely into scratch
 cd $SHARED_SCRATCH/$USER/wta_scratch
@@ -18,20 +19,25 @@ cd $SHARED_SCRATCH/$USER/wta_scratch
 # Call your safe, permanent home directory virtual environment
 source $HOME/.venv/bin/activate
 
-echo "Starting at : `date`"
+echo "comparing clustertypes in 3mb nch60_pt500"
+echo "Starting Task ID $SLURM_ARRAY_TASK_ID at : $(date)"
 echo "Running on hosts: $SLURM_NODELIST"
 echo "Running on $SLURM_NNODES nodes."
 echo "Running on $SLURM_NPROCS processors."
 echo "Current WORKDIR is : $SLURM_SUBMIT_DIR"
 
 if [[ -d $SHARED_SCRATCH/$USER && -w $SHARED_SCRATCH/$USER ]]; then
-    cd $SHARED_SCRATCH/$USER/wta_scratch
-    source $HOME/.venv/bin/activate
+    
+    # target ALL BATCHES
+    INPUT_FILE="$SHARED_SCRATCH/$USER/wta_scratch/data/3mb/nch60_pt500/"
+    OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/intermediate_output/3mb_nch60/nch_comparison_premerge/"
 
-    # target merged signals
-    INPUT_FILE="$SHARED_SCRATCH/$USER/wta_scratch/data/0mb/nch60_pt500/"
-    OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/output/0mb_nch60/"
+    # target specific batch
+    BATCH_NUM=$SLURM_ARRAY_TASK_ID
 
 
-    python -u "$SHARED_SCRATCH/$USER/wta_scratch/clustertype_comparisons.py" --input "$INPUT_FILE" --outdir "$OUTPUT_DIR"
+    python -u "$SHARED_SCRATCH/$USER/wta_scratch/clustertype_comparisons.py" \
+    --input "$INPUT_FILE" \
+    --outdir "$OUTPUT_DIR" \
+    --batchnum $BATCH_NUM
 fi
