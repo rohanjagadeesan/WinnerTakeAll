@@ -42,7 +42,7 @@ def main():
     ROOT.gROOT.SetBatch(True) #Force ROOT into headless batch mode - i.e. turn off pop up graphics
 
     # Jet definitions
-    jet_radius = 0.8 #max radius accepted by fastjet is 1000. radius value in prl paper is 0.8 in lab frame.
+    jet_radius = 1000 #max radius accepted by fastjet is 1000. radius value in prl paper is 0.8 in lab frame. Use 1000 because root data already has the clustered jets
     wta_def = fastjet.JetDefinition(fastjet.antikt_algorithm, jet_radius, fastjet.WTA_pt_scheme) #winner take all definition
     std_def = fastjet.JetDefinition(fastjet.antikt_algorithm, jet_radius) #standard E scheme definition
 
