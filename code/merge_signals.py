@@ -1,4 +1,4 @@
-# merge the per-batch signals and EPDs on NOTS
+# merge the per-batch signals and EPDs
 
 # IMPORTS---
 import ROOT
@@ -69,8 +69,8 @@ def main():
         merged_wta_num_jets[bin_key] = 0
         merged_std_num_jets[bin_key] = 0
 
-        merged_wta_avg_Nch[bin_key] = 0
-        merged_std_avg_Nch[bin_key] = 0
+        #merged_wta_avg_Nch[bin_key] = 0
+        #merged_std_avg_Nch[bin_key] = 0
     
     print(f"Initialised merged histograms and parameters")
 
@@ -115,8 +115,16 @@ def main():
             merged_std_total_Nch[bin_key] += total_Nch_std
 
             # avg Nch (will only be accurate at the end)
-            merged_wta_avg_Nch[bin_key] = merged_wta_total_Nch[bin_key] / merged_wta_num_jets[bin_key] 
-            merged_std_avg_Nch[bin_key] = merged_std_total_Nch[bin_key] / merged_std_num_jets[bin_key]
+            if merged_wta_num_jets[bin_key] > 0:
+                merged_wta_avg_Nch[bin_key] = merged_wta_total_Nch[bin_key] / merged_wta_num_jets[bin_key] 
+            else:
+                merged_wta_avg_Nch[bin_key] = 0
+            
+            if merged_std_num_jets[bin_key] > 0:
+                merged_std_avg_Nch[bin_key] = merged_std_total_Nch[bin_key] / merged_std_num_jets[bin_key]
+            else:
+                merged_std_avg_Nch[bin_key] = 0
+                
 
         file.Close()
         print(f"Successfully read {filepath}")

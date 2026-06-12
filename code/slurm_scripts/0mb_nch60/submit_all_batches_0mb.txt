@@ -29,7 +29,7 @@ if [[ -d $SHARED_SCRATCH/$USER && -w $SHARED_SCRATCH/$USER ]]; then
 
     # target ALL BATCHES
     INPUT_FILE="$SHARED_SCRATCH/$USER/wta_scratch/data/0mb/nch60_pt500/"
-    OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/intermediate_output/0mb_nch60/premerge/"
+    OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/intermediate_output/new_radius/0mb_nch60/premerge/"
 
     # target specific batch
     BATCH_NUM=$SLURM_ARRAY_TASK_ID

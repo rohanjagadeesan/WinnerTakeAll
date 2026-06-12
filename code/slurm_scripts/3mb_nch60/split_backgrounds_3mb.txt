@@ -1,0 +1,69 @@
+#!/bin/bash
+#SBATCH --job-name=wta_split_3mb
+#SBATCH --account=commons              
+#SBATCH --partition=commons            
+#SBATCH --ntasks=1                
+#SBATCH --cpus-per-task=1             
+#SBATCH --mem=16G
+#SBATCH --time=04:00:00              
+#SBATCH --mail-user=rj65@rice.edu 
+#SBATCH --mail-type=ALL            
+
+# 1. DEFINE THE ARRAY SPECIFICATION : 0-29 for 30 tasks
+# %A inside logs becomes the master Job ID, %a becomes the individual task index
+#SBATCH --array=0-29
+#SBATCH --output=logs/bkg/split_bkg_%A_%a.out       
+#SBATCH --error=logs/bkg/split_bkg_%A_%a.err 
+
+# Move execution context safely into scratch
+cd $SHARED_SCRATCH/$USER/wta_scratch
+source $HOME/.venv/bin/activate
+
+echo "Starting Task ID $SLURM_ARRAY_TASK_ID at : $(date)"
+echo "Running on host: $SLURM_NODELIST"
+
+if [[ -d $SHARED_SCRATCH/$USER && -w $SHARED_SCRATCH/$USER ]]; then
+
+    # 2. DEFINE THE MULTIPLICITY BINS ARRAY IN BASH
+    BINS=("48_60" "60_71")
+    NUM_BINS=${#BINS[@]} 
+    
+    # choose cluster type
+    if [ $SLURM_ARRAY_TASK_ID -lt 20 ]; then
+        CLUSTER_TYPE="WTA"
+    else
+        CLUSTER_TYPE="STD"
+    fi
+
+    # choose mult bin
+    if [ $SLURM_ARRAY_TASK_ID -lt 10 -o $SLURM_ARRAY_TASK_ID -ge 20 ]; then
+        SELECTED_BIN="60_71"
+    else
+        SELECTED_BIN="48_60"
+    fi
+
+    SPLIT_ID=$(( SLURM_ARRAY_TASK_ID % 10 ))
+
+    echo " -> Mapping Task ID $SLURM_ARRAY_TASK_ID to Frame: $CLUSTER_TYPE, Bin: $SELECTED_BIN"
+
+
+    # Define your uniform input file location
+    INPUT_FILE="$SHARED_SCRATCH/$USER/wta_scratch/output/new_radius/3mb_nch60/Merged_Signals.root"
+    
+    # 4. CRITICAL: Output to a completely unique, isolated file per task to avoid collision!
+    OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/intermediate_output/new_radius/3mb_nch60/background_pieces"
+    mkdir -p "$OUTPUT_DIR"
+    
+    # Run the background maker for this explicit chunk slice
+    # (Adjust the exact flags --clustertype and --multbin below to match how you named your new parser inputs)
+    python -u "$SHARED_SCRATCH/$USER/wta_scratch/adjusted_background_maker_parallel.py" \
+        --input "$INPUT_FILE" \
+        --outdir "$OUTPUT_DIR" \
+        --clustertype "$CLUSTER_TYPE" \
+        --multbin "$SELECTED_BIN" \
+        --num_splits 10 \
+        --split_id $SPLIT_ID
+
+
+    echo "Task ID $SLURM_ARRAY_TASK_ID successfully saved its segment file."
+fi

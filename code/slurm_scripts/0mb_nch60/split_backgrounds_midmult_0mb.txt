@@ -53,10 +53,10 @@ echo " -> Mapping Task ID $SLURM_ARRAY_TASK_ID to Frame: $CLUSTER_TYPE, Bin: $SE
 
 
 # Define your uniform input file location
-INPUT_FILE="$SHARED_SCRATCH/$USER/wta_scratch/output/0mb_nch60/Merged_Signals.root"
+INPUT_FILE="$SHARED_SCRATCH/$USER/wta_scratch/output//new_radius/0mb_nch60/Merged_Signals.root"
 
 # 4. CRITICAL: Output to a completely unique, isolated file per task to avoid collision!
-OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/intermediate_output/0mb_nch60/background_pieces"
+OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/intermediate_output/new_radius/0mb_nch60/background_pieces"
 mkdir -p "$OUTPUT_DIR"
 
 # Run the background maker for this explicit chunk slice

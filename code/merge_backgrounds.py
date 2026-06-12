@@ -1,4 +1,3 @@
-# for merging backgrounds on nots
 import argparse
 import glob
 import ROOT

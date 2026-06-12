@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=comp_merge_3mb
+#SBATCH --job-name=WTA_merge_bg_3mb
 #SBATCH --account=commons              
 #SBATCH --partition=commons            
 #SBATCH --ntasks=1                
@@ -8,8 +8,8 @@
 #SBATCH --time=00:10:00            
 #SBATCH --mail-user=rj65@rice.edu 
 #SBATCH --mail-type=ALL            
-#SBATCH --output=logs/merging/comp_merge%j.out       
-#SBATCH --error=logs/merging/comp_merge_%j.err 
+#SBATCH --output=logs/merging/bkg_merge_%j.out       
+#SBATCH --error=logs/merging/bkg_merge_%j.err 
 
 
 # Move your execution context safely into scratch
@@ -18,7 +18,6 @@ cd $SHARED_SCRATCH/$USER/wta_scratch
 # Call your safe, permanent home directory virtual environment
 source $HOME/.venv/bin/activate
 
-echo "Merging 3mb cluster type comparisons"
 echo "Starting at : `date`"
 echo "Running on hosts: $SLURM_NODELIST"
 echo "Running on $SLURM_NNODES nodes."
@@ -30,9 +29,9 @@ if [[ -d $SHARED_SCRATCH/$USER && -w $SHARED_SCRATCH/$USER ]]; then
     source $HOME/.venv/bin/activate
 
     # target merged signals
-    INPUT_FILE="$SHARED_SCRATCH/$USER/wta_scratch/intermediate_output/3mb_nch60/nch_comparison_premerge/"
-    OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/output/3mb_nch60/"
+    INPUT_FILE="$SHARED_SCRATCH/$USER/wta_scratch/intermediate_output/new_radius/3mb_nch60/background_pieces/"
+    OUTPUT_DIR="$SHARED_SCRATCH/$USER/wta_scratch/output/new_radius/3mb_nch60/"
 
     # submit sbatch from the same directory as the .py file
-    python -u "$SHARED_SCRATCH/$USER/wta_scratch/merge_cluster_comps.py" --input "$INPUT_FILE" --outdir "$OUTPUT_DIR"
+    python -u "$SHARED_SCRATCH/$USER/wta_scratch/merge_backgrounds.py" --input "$INPUT_FILE" --outdir "$OUTPUT_DIR"
 fi
