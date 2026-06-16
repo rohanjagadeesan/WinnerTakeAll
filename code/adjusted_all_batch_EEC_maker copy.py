@@ -1,7 +1,14 @@
+# changes:
+# 1. using pt instead of .E
+# 2. doing per-jet weight normalisation (!!! most important change)
+# 3. doing the old arccos(cos( phi1-phi2 )) method
+# 4. save number of jets in each mult bin for averaging over all jets later
+
 # this file takes in 
 # 1. a directory containing directories for each batch
 # 2. an output directory where the results are saved
 # 3. the batch number to analyse all files for
+
 
 # output: A root file containing (for both wta and standard, for all files in the batch) 
 # - energy profile, EEC signal, total Nch, and number of jets
@@ -56,11 +63,6 @@ def main():
 
 
     # Setup histogram bin specs
-    PI = np.pi 
-    eta_bins, eta_min, eta_max = 41, -6.15, 6.15    
-    phi_bins = 33
-    phi_min = -(math.pi/2.0) + (math.pi/32.0)
-    phi_max = (3*math.pi/2.0) + (math.pi/32.0)
     deltarBW = 0.001
 
     # Book empty histograms once up front
@@ -254,14 +256,15 @@ def main():
                     # find deta and dphi
                     wta_deta = ak.to_numpy(ak.flatten(wta_p1.eta - wta_p2.eta, axis=None)).astype(np.float64)
                     # High-performance phi wrap
-                    wta_dphi = wta_p1.phi - wta_p2.phi
-                    wta_dphi = ak.to_numpy( ak.flatten( np.remainder(wta_dphi + np.pi, 2 * np.pi) - np.pi, axis=None ))
+                    wta_dphi = ak.to_numpy(ak.flatten(np.arccos(np.cos(wta_p1.phi - wta_p2.phi)), axis=None)).astype(np.float64)
                     
                     wta_dRL = np.sqrt( np.square(wta_deta) + np.square(wta_dphi) ) # for EEC
                     
                     # compute the weights
-                    wta_energies = wta_p1.E * wta_p2.E
-                    wta_weights = ak.to_numpy(ak.flatten(wta_energies, axis=None)).astype(np.float64)
+                    wta_jet_pt_sq = binned_wta_axes.pt ** 2 # jet pt squared
+                    wta_energies = wta_p1.pt * wta_p2.pt
+                    wta_normalised_energies = wta_energies / wta_jet_pt_sq # E1*E2 / Ej^2
+                    wta_weights = ak.to_numpy(ak.flatten(wta_normalised_energies, axis=None)).astype(np.float64)
                     wta_n_sig_pairs = len(wta_deta) #number of signal pairs in this jet
 
                     # fill the histogram
@@ -272,18 +275,18 @@ def main():
                     del wta_pairs, wta_p1, wta_p2, wta_deta, wta_dphi, wta_weights
                     gc.collect()
 
-                # Fill in the energy profile:
-                wta_deta_profile = ak.flatten((binned_wta_parts.eta - binned_wta_axes.eta), axis=None)
-                wta_dphi_profile = binned_wta_parts.phi - binned_wta_axes.phi
-                wta_dphi_profile = ak.flatten((np.remainder(wta_dphi_profile + np.pi, 2 * np.pi) - np.pi ), axis=None)
-                
-                wta_dRL_profile = np.sqrt(np.square(wta_deta_profile) + np.square(wta_dphi_profile))
-                wta_dRL_profile_flat = ak.to_numpy(ak.flatten(wta_dRL_profile, axis=None)).astype(np.float64)
-                wta_weights_profile = ak.to_numpy(ak.flatten(binned_wta_parts.E, axis=None)).astype(np.float64)
-                
-                if len(wta_dRL_profile_flat) > 0:
-                    h_profile_wta = wta_histograms[bin_key]['profile'] #fill the right hist
-                    h_profile_wta.FillN(len(wta_dRL_profile), wta_dRL_profile_flat, wta_weights_profile)
+                    # Fill in the energy profile:
+                    wta_deta_profile = ak.flatten((binned_wta_parts.eta - binned_wta_axes.eta), axis=None)
+                    wta_dphi_profile = ak.to_numpy(ak.flatten(np.arccos(np.cos(binned_wta_parts.phi - binned_wta_axes.phi)), axis=None)).astype(np.float64)
+                    
+                    wta_dRL_profile = np.sqrt(np.square(wta_deta_profile) + np.square(wta_dphi_profile))
+                    wta_dRL_profile_flat = ak.to_numpy(ak.flatten(wta_dRL_profile, axis=None)).astype(np.float64)
+                    wta_profile_energies = binned_wta_parts.pt / binned_wta_axes.pt
+                    wta_weights_profile = ak.to_numpy(ak.flatten(wta_profile_energies, axis=None)).astype(np.float64)
+                    
+                    if len(wta_dRL_profile_flat) > 0:
+                        h_profile_wta = wta_histograms[bin_key]['profile'] #fill the right hist
+                        h_profile_wta.FillN(len(wta_dRL_profile), wta_dRL_profile_flat, wta_weights_profile)
 
 
             # 2. STD signal
@@ -293,13 +296,14 @@ def main():
                 if ak.sum(ak.num(std_pairs)) > 0:
                     std_p1, std_p2 = ak.unzip(std_pairs)
                     std_deta = ak.to_numpy(ak.flatten((std_p1.eta - std_p2.eta), axis=None)).astype(np.float64)
-                    std_dphi = std_p1.phi - std_p2.phi
-                    std_dphi = ak.to_numpy( ak.flatten((np.remainder(std_dphi + np.pi, 2 * np.pi) - np.pi ), axis=None))
+                    std_dphi = ak.to_numpy(ak.flatten(np.arccos(np.cos(std_p1.phi - std_p2.phi)), axis=None)).astype(np.float64)
                     
                     std_dRL = np.sqrt( np.square(std_deta) + np.square(std_dphi) )
                     
-                    std_energies = std_p1.E * std_p2.E
-                    std_weights = ak.to_numpy(ak.flatten(std_energies, axis=None)).astype(np.float64)
+                    std_jet_pt_sq = binned_std_axes.pt ** 2
+                    std_energies = std_p1.pt * std_p2.pt
+                    std_normalised_energies = std_energies / std_jet_pt_sq
+                    std_weights = ak.to_numpy(ak.flatten(std_normalised_energies, axis=None)).astype(np.float64)
                     std_n_sig_pairs = len(std_deta)
 
                     h_EEC_std = std_histograms[bin_key]['eec']
@@ -308,18 +312,18 @@ def main():
                     del std_pairs, std_p1, std_p2, std_deta, std_dphi, std_weights
                     gc.collect()
 
-                # Fill in the energy profile:
-                std_deta_profile = ak.flatten(abs(binned_std_parts.eta - binned_std_axes.eta), axis=None)
-                std_dphi_profile = binned_std_parts.phi - binned_std_axes.phi
-                std_dphi_profile = ak.flatten( (np.remainder(std_dphi_profile + np.pi, 2 * np.pi) - np.pi) , axis=None)
-                
-                std_dRL_profile = np.sqrt(np.square(std_deta_profile) + np.square(std_dphi_profile))
-                std_dRL_profile_flat = ak.to_numpy(ak.flatten(std_dRL_profile, axis=None)).astype(np.float64)
-                std_weights_profile = ak.to_numpy(ak.flatten(binned_std_parts.E, axis=None)).astype(np.float64)
-                
-                if len(std_dRL_profile_flat) > 0:
-                    h_profile_std = std_histograms[bin_key]['profile'] #fill the right hist
-                    h_profile_std.FillN(len(std_dRL_profile_flat), std_dRL_profile_flat, std_weights_profile)
+                    # Fill in the energy profile:
+                    std_deta_profile = ak.flatten(abs(binned_std_parts.eta - binned_std_axes.eta), axis=None)
+                    std_dphi_profile = ak.to_numpy(ak.flatten(np.arccos(np.cos(binned_std_parts.phi - binned_std_axes.phi)), axis=None)).astype(np.float64)
+                    
+                    std_dRL_profile = np.sqrt(np.square(std_deta_profile) + np.square(std_dphi_profile))
+                    std_dRL_profile_flat = ak.to_numpy(ak.flatten(std_dRL_profile, axis=None)).astype(np.float64)
+                    std_profile_energies = binned_std_parts.pt / binned_std_axes.pt
+                    std_weights_profile = ak.to_numpy(ak.flatten(std_profile_energies, axis=None)).astype(np.float64)
+                    
+                    if len(std_dRL_profile_flat) > 0:
+                        h_profile_std = std_histograms[bin_key]['profile'] #fill the right hist
+                        h_profile_std.FillN(len(std_dRL_profile_flat), std_dRL_profile_flat, std_weights_profile)
 
             del binned_wta_parts, binned_std_parts
             gc.collect()
@@ -359,6 +363,11 @@ def main():
         hEEC_std.Write()
         hProfile_wta.Write()
         hProfile_std.Write()
+
+        param_num_jets_wta = ROOT.TParameter('double')(f"num_jets_WTA_{bin_name}", float(num_jets_dict[bin_key]["wta"]))
+        param_num_jets_std = ROOT.TParameter('double')(f"num_jets_STD_{bin_name}", float(num_jets_dict[bin_key]["std"]))
+        param_num_jets_wta.Write()
+        param_num_jets_std.Write()
 
         print(f"Written batch {args.batchnum} raw histograms for multiplicity bin: {bin_name}")
 
