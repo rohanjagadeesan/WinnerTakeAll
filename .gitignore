@@ -1,3 +1,5 @@
 code/local/fastjet_demo.ipynb
 
 output/old/
+
+*.DS_Store
